@@ -206,27 +206,34 @@
         }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 15px;
             margin-bottom: 30px;
         }
 
         .stat-card {
+            flex: 1;
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         }
 
         .stat-card h4 {
             color: #666;
-            margin-bottom: 10px;
-            font-size: 0.9em;
+            margin-bottom: 6px;
+            font-size: 0.85em;
         }
 
         .stat-card .value {
-            font-size: 2em;
+            font-size: 1.6em;
             font-weight: bold;
             color: #333;
         }
@@ -1287,7 +1294,7 @@
             document.getElementById('playerTotalHeal').textContent = formatNumber(playerTotalHeal);
             document.getElementById('npcTotalDamage').textContent = formatNumber(npcTotalDmg);
 
-            // 玩家伤害排行图表 - 降序排列、显示职业名字、显示伤害百分比
+            // 玩家伤害排行图表 - 降序排列、显示职业名字、百分比显示在柱状图右侧
             // 将对象转换为数组并排序（降序）
             const playerDamageArray = Object.entries(stats.playerDamage)
                 .sort((a, b) => {
@@ -1299,23 +1306,33 @@
                     return a[0].localeCompare(b[0]);
                 });
 
-            // 构建带职业名称和百分比的标签
+            // 构建带职业名称的标签（不包含百分比）
             const sortedLabels = playerDamageArray.map(item => {
                 const playerName = item[0];
                 const breedId = combat.playersBreed[playerName] || '0';
                 const breedName = breedNames[breedId] || '未知';
-                const percentage = ((item[1] / playerTotalDmg) * 100).toFixed(1);
-                return `${playerName}（${breedName}） - ${percentage}%`;
+                return `${playerName}（${breedName}）`;
             });
 
             const sortedData = playerDamageArray.map(item => item[1]);
+
+            // 创建渐变色
+            const canvas = document.getElementById('playerDamageChart');
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width || 400, 0);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+
+            // 保存 playerTotalDmg 供动画完成后使用
+            const totalDmg = playerTotalDmg;
 
             updateChart('playerDamageChart', 'bar', {
                 labels: sortedLabels,
                 datasets: [{
                     label: '伤害',
                     data: sortedData,
-                    backgroundColor: sortedLabels.map(() => '#667eea')
+                    backgroundColor: gradient,
+                    borderRadius: 6
                 }]
             }, {
                 indexAxis: 'y',
@@ -1326,10 +1343,45 @@
                         callbacks: {
                             label: function(context) {
                                 const value = context.raw;
-                                const percentage = ((value / playerTotalDmg) * 100).toFixed(1);
+                                const percentage = ((value / totalDmg) * 100).toFixed(1);
                                 return `伤害: ${formatNumber(value)} (${percentage}%)`;
                             }
                         }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 800,
+                    easing: 'easeOutQuart',
+                    onComplete: function() {
+                        const chart = this;
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            meta.data.forEach((bar, index) => {
+                                const value = dataset.data[index];
+                                const percentage = ((value / totalDmg) * 100).toFixed(1) + '%';
+                                ctx.fillStyle = '#666';
+                                ctx.font = 'bold 11px sans-serif';
+                                ctx.textAlign = 'left';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(percentage, bar.x + 8, bar.y);
+                            });
+                        });
+                        ctx.restore();
                     }
                 }
             });
@@ -1401,18 +1453,43 @@
             const skillLabels = Object.keys(detail.skills);
             const skillData = Object.values(detail.skills);
 
+            // 创建渐变色
+            const skillCanvas = document.getElementById('skillDamageChart');
+            const skillCtx = skillCanvas.getContext('2d');
+            const skillGradient = skillCtx.createLinearGradient(0, 0, skillCanvas.width || 400, 0);
+            skillGradient.addColorStop(0, '#667eea');
+            skillGradient.addColorStop(1, '#764ba2');
+
             updateChart('skillDamageChart', 'bar', {
                 labels: skillLabels,
                 datasets: [{
                     label: '伤害',
                     data: skillData,
-                    backgroundColor: skillLabels.map(() => '#667eea')
+                    backgroundColor: skillGradient,
+                    borderRadius: 6
                 }]
             }, {
                 indexAxis: 'y',
                 responsive: true,
                 plugins: {
                     legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 800,
+                    easing: 'easeOutQuart'
                 }
             });
 
@@ -1420,17 +1497,43 @@
             const targetLabels = Object.keys(detail.targets);
             const targetData = Object.values(detail.targets);
 
+            // 创建渐变色
+            const targetCanvas = document.getElementById('targetDamageChart');
+            const targetCtx = targetCanvas.getContext('2d');
+            const targetGradient = targetCtx.createLinearGradient(0, 0, 0, targetCanvas.height || 300);
+            targetGradient.addColorStop(0, '#764ba2');
+            targetGradient.addColorStop(1, '#667eea');
+
             updateChart('targetDamageChart', 'bar', {
                 labels: targetLabels,
                 datasets: [{
                     label: '伤害',
                     data: targetData,
-                    backgroundColor: targetLabels.map(() => '#764ba2')
+                    backgroundColor: targetGradient,
+                    borderRadius: 6
                 }]
             }, {
                 responsive: true,
                 plugins: {
                     legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 800,
+                    easing: 'easeOutQuart'
                 }
             });
         }
