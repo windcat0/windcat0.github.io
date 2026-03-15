@@ -398,6 +398,96 @@
             margin-top: 20px;
         }
 
+        /* 目录选择区域样式 */
+        .directory-section {
+            margin-bottom: 15px;
+        }
+
+        .directory-path {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0ff;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #667eea;
+            word-break: break-all;
+        }
+
+        .separator {
+            text-align: center;
+            color: #999;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .separator::before,
+        .separator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .separator::before {
+            left: 0;
+        }
+
+        .separator::after {
+            right: 0;
+        }
+
+        /* 刷新控制区域样式 */
+        .refresh-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .refresh-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .refresh-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .refresh-indicator.active {
+            background-color: #4caf50;
+            animation: pulse 1.5s infinite;
+        }
+
+        .refresh-indicator.inactive {
+            background-color: #ccc;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        #lastRefreshTime {
+            color: #999;
+            font-size: 0.85em;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -432,6 +522,15 @@
             <div class="sidebar">
                 <div class="upload-section">
                     <h3>上传日志文件</h3>
+
+                    <!-- 目录选择区域 -->
+                    <div class="directory-section">
+                        <button class="btn" id="selectDirBtn">选择日志目录</button>
+                        <div id="directoryPath" class="directory-path" style="display: none;"></div>
+                    </div>
+
+                    <div class="separator">或</div>
+
                     <div class="file-input-wrapper">
                         <input type="file" id="fileInput" multiple accept=".log,.log.1,.log.2,.txt">
                         <label for="fileInput" class="file-input-label">
@@ -440,6 +539,16 @@
                         </label>
                     </div>
                     <button class="btn" id="analyzeBtn" disabled>开始分析</button>
+                </div>
+
+                <!-- 刷新控制区域 -->
+                <div class="refresh-control" id="refreshControl" style="display: none;">
+                    <div class="refresh-status">
+                        <span class="refresh-indicator inactive"></span>
+                        <span id="refreshStatus">自动刷新：已停止</span>
+                        <span id="lastRefreshTime"></span>
+                    </div>
+                    <button class="btn btn-small" id="toggleRefreshBtn">启动刷新</button>
                 </div>
 
                 <div class="combat-list">
@@ -588,6 +697,14 @@
         let currentCombatId = null;
         let selectedPlayer = null;
         let charts = {};
+
+        // 新增：目录和刷新相关变量
+        let directoryHandle = null;
+        let refreshTimer = null;
+        let isRefreshing = false;
+        let lastRefreshTime = null;
+        const REFRESH_INTERVAL = 20000; // 20秒
+        const MAX_COMBATS = 5; // 保留最近5场战斗
 
         // 语言字典（简化版）
         const langDict = {
@@ -1123,6 +1240,164 @@
             return map[elem] || 'Neutral';
         }
 
+        // ========== 新增：目录选择功能 ==========
+
+        // 检测 File System Access API 支持
+        function isFileSystemAccessSupported() {
+            return 'showDirectoryPicker' in window;
+        }
+
+        // 选择目录
+        async function selectDirectory() {
+            try {
+                if (!isFileSystemAccessSupported()) {
+                    alert('您的浏览器不支持目录选择功能，请使用 Chrome 或 Edge 浏览器');
+                    return null;
+                }
+                const handle = await window.showDirectoryPicker({ mode: 'read' });
+                return handle;
+            } catch (error) {
+                if (error.name === 'AbortError') return null; // 用户取消
+                console.error('选择目录失败:', error);
+                return null;
+            }
+        }
+
+        // 验证文件名格式（wakfu.log 或 wakfu.log.*）
+        function isValidLogFile(filename) {
+            return /^wakfu\.log(\.\d+)?$/.test(filename);
+        }
+
+        // 匹配日志文件
+        async function matchLogFiles(dirHandle) {
+            const files = [];
+            try {
+                for await (const entry of dirHandle.values()) {
+                    if (entry.kind === 'file' && isValidLogFile(entry.name)) {
+                        files.push(await entry.getFile());
+                    }
+                }
+            } catch (error) {
+                console.error('扫描目录失败:', error);
+            }
+
+            // 排序：wakfu.log 最前，然后按数字排序
+            files.sort((a, b) => {
+                if (a.name === 'wakfu.log') return -1;
+                if (b.name === 'wakfu.log') return 1;
+                const numA = parseInt(a.name.split('.').pop()) || 0;
+                const numB = parseInt(b.name.split('.').pop()) || 0;
+                return numA - numB;
+            });
+
+            return files;
+        }
+
+        // ========== 新增：战斗筛选功能 ==========
+
+        // 筛选最近N场战斗
+        function filterRecentCombats(combatDict, maxCount) {
+            // 按战斗ID降序排序，保留 CombatData 实例（不展开）
+            const sortedIds = Object.keys(combatDict)
+                .sort((a, b) => parseInt(b) - parseInt(a))
+                .slice(0, maxCount);
+
+            // 返回筛选后的战斗数据（保持 CombatData 实例）
+            const result = {};
+            sortedIds.forEach(id => {
+                result[id] = combatDict[id];
+            });
+            return result;
+        }
+
+        // ========== 新增：自动刷新功能 ==========
+
+        // 启动自动刷新
+        function startAutoRefresh() {
+            if (refreshTimer) return; // 已经在运行
+
+            refreshTimer = setInterval(async () => {
+                await performRefresh();
+            }, REFRESH_INTERVAL);
+
+            updateRefreshStatus(true);
+            console.log('自动刷新已启动');
+        }
+
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+            updateRefreshStatus(false);
+            console.log('自动刷新已停止');
+        }
+
+        // 执行刷新
+        async function performRefresh() {
+            if (!directoryHandle || isRefreshing) return;
+
+            isRefreshing = true;
+            updateRefreshStatus(true);
+
+            try {
+                const files = await matchLogFiles(directoryHandle);
+                if (files.length === 0) {
+                    stopAutoRefresh();
+                    alert('日志文件不存在，已停止自动刷新');
+                    return;
+                }
+
+                let fullText = '';
+                for (const file of files) {
+                    fullText += await file.text() + '\n';
+                }
+
+                const combatDict = parseCombatData(fullText);
+                combatDataDict = filterRecentCombats(combatDict, MAX_COMBATS);
+
+                updateCombatList();
+                lastRefreshTime = new Date();
+                updateRefreshTimeDisplay();
+
+                console.log(`刷新完成，当前显示 ${Object.keys(combatDataDict).length} 场战斗`);
+            } catch (error) {
+                console.error('刷新失败:', error);
+            } finally {
+                isRefreshing = false;
+                updateRefreshStatus(refreshTimer !== null);
+            }
+        }
+
+        // 更新刷新状态显示
+        function updateRefreshStatus(isRunning) {
+            const indicator = document.querySelector('.refresh-indicator');
+            const statusText = document.getElementById('refreshStatus');
+            const toggleBtn = document.getElementById('toggleRefreshBtn');
+
+            if (refreshTimer) {
+                indicator.classList.remove('inactive');
+                indicator.classList.add('active');
+                statusText.textContent = '自动刷新：运行中';
+                toggleBtn.textContent = '停止刷新';
+            } else {
+                indicator.classList.remove('active');
+                indicator.classList.add('inactive');
+                statusText.textContent = '自动刷新：已停止';
+                toggleBtn.textContent = '启动刷新';
+            }
+        }
+
+        // 更新刷新时间显示
+        function updateRefreshTimeDisplay() {
+            const timeElement = document.getElementById('lastRefreshTime');
+            if (lastRefreshTime) {
+                const timeStr = lastRefreshTime.toLocaleTimeString();
+                timeElement.textContent = `（上次刷新: ${timeStr}）`;
+            }
+        }
+
         // 格式化数字
         function formatNumber(num) {
             return num.toLocaleString();
@@ -1408,12 +1683,15 @@
                 }
 
                 // 解析数据
-                parseCombatData(fullText);
+                const combatDict = parseCombatData(fullText);
+
+                // 筛选最近5场战斗
+                combatDataDict = filterRecentCombats(combatDict, MAX_COMBATS);
 
                 // 更新UI
                 updateCombatList();
 
-                alert(`分析完成！找到 ${Object.keys(combatDataDict).length} 场战斗。`);
+                alert(`分析完成！找到 ${Object.keys(combatDataDict).length} 场战斗（已筛选最近${MAX_COMBATS}场）。`);
             } catch (error) {
                 console.error('分析失败:', error);
                 alert('分析失败: ' + error.message);
@@ -1448,6 +1726,89 @@
                 });
                 document.getElementById(tabId).classList.add('active');
             });
+        });
+
+        // ========== 新增：目录选择和刷新控制事件绑定 ==========
+
+        // 目录选择按钮事件
+        document.getElementById('selectDirBtn').addEventListener('click', async function() {
+            const handle = await selectDirectory();
+            if (!handle) return;
+
+            directoryHandle = handle;
+
+            // 显示目录路径
+            const pathElement = document.getElementById('directoryPath');
+            pathElement.textContent = handle.name;
+            pathElement.style.display = 'block';
+
+            // 显示刷新控制区域
+            document.getElementById('refreshControl').style.display = 'flex';
+
+            // 匹配日志文件
+            const files = await matchLogFiles(handle);
+            if (files.length === 0) {
+                alert('未找到日志文件（wakfu.log 或 wakfu.log.*）');
+                return;
+            }
+
+            // 执行分析
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = '分析中...';
+
+            try {
+                let fullText = '';
+                for (const file of files) {
+                    fullText += await file.text() + '\n';
+                }
+
+                const combatDict = parseCombatData(fullText);
+                combatDataDict = filterRecentCombats(combatDict, MAX_COMBATS);
+
+                updateCombatList();
+                lastRefreshTime = new Date();
+                updateRefreshTimeDisplay();
+
+                alert(`分析完成！找到 ${Object.keys(combatDataDict).length} 场战斗（已筛选最近${MAX_COMBATS}场）。`);
+
+                // 自动启动刷新
+                startAutoRefresh();
+            } catch (error) {
+                console.error('分析失败:', error);
+                alert('分析失败: ' + error.message);
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = '开始分析';
+            }
+        });
+
+        // 刷新切换按钮事件
+        document.getElementById('toggleRefreshBtn').addEventListener('click', function() {
+            if (refreshTimer) {
+                stopAutoRefresh();
+            } else {
+                if (!directoryHandle) {
+                    alert('请先选择日志目录');
+                    return;
+                }
+                startAutoRefresh();
+            }
+        });
+
+        // 页面离开事件 - 自动停止刷新
+        window.addEventListener('beforeunload', function() {
+            stopAutoRefresh();
+        });
+
+        // API 支持检测
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isFileSystemAccessSupported()) {
+                const btn = document.getElementById('selectDirBtn');
+                btn.disabled = true;
+                btn.title = '您的浏览器不支持此功能，请使用 Chrome 或 Edge';
+                btn.textContent = '目录选择（浏览器不支持）';
+            }
         });
     </script>
 </body>
