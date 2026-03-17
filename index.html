@@ -13,8 +13,16 @@
         }
 
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --primary-color: #3CB3A8;
+            --primary-dark: #2A9D8F;
+            --primary-light: #4ECDC4;
+            --secondary-color: #8B2F5C;
+            --secondary-dark: #6B1F3F;
+            --accent-color: #4ECDC4;
+            --accent-light: #6EDDD4;
+            --primary-gradient: linear-gradient(135deg, #3CB3A8 0%, #2A9D8F 100%);
+            --secondary-gradient: linear-gradient(135deg, #8B2F5C 0%, #6B1F3F 100%);
+            --accent-gradient: linear-gradient(135deg, #4ECDC4 0%, #3CB3A8 100%);
             --glass-bg: rgba(255, 255, 255, 0.95);
             --glass-border: rgba(255, 255, 255, 0.2);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -28,7 +36,7 @@
 
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0d3d3a 0%, #1a5f5a 50%, #0d3d3a 100%);
             min-height: 100vh;
             padding: 20px;
             position: relative;
@@ -42,10 +50,10 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(240, 147, 251, 0.1) 0%, transparent 40%);
+            background:
+                radial-gradient(circle at 20% 80%, rgba(60, 179, 168, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 47, 92, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.08) 0%, transparent 40%);
             animation: bgFloat 20s ease-in-out infinite;
             pointer-events: none;
             z-index: 0;
@@ -175,9 +183,9 @@
         }
 
         .file-input-label:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-            border-color: #667eea;
-            color: #667eea;
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: var(--shadow-sm);
         }
@@ -195,6 +203,7 @@
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 6px 0 #8B2F5C, 0 8px 15px rgba(0, 0, 0, 0.3);
         }
 
         .btn::before {
@@ -213,12 +222,13 @@
         }
 
         .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #8B2F5C, 0 10px 20px rgba(0, 0, 0, 0.35);
         }
 
         .btn:active {
-            transform: translateY(-1px);
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #8B2F5C, 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         .btn:disabled {
@@ -279,8 +289,8 @@
         }
 
         .combat-item:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
-            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1) 0%, rgba(255, 111, 0, 0.1) 100%);
+            border-color: var(--primary-color);
             transform: translateX(4px);
         }
 
@@ -292,7 +302,7 @@
             background: var(--primary-gradient);
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(247, 147, 30, 0.4);
         }
 
         .combat-item.active::before {
@@ -337,13 +347,13 @@
         }
 
         .tab:hover {
-            color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
         }
 
         .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
             font-weight: 600;
         }
 
@@ -458,8 +468,8 @@
         }
 
         .player-card.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1) 0%, rgba(255, 111, 0, 0.1) 100%);
         }
 
         .player-card.selected::after {
@@ -627,7 +637,7 @@
         }
 
         .data-table tbody tr:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
         }
 
         .data-table tbody tr:last-child td {
@@ -646,7 +656,7 @@
             display: inline-block;
             width: 24px;
             height: 24px;
-            border: 3px solid #667eea;
+            border: 3px solid var(--primary-color);
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -661,12 +671,12 @@
         @keyframes highlight-fade {
             0% {
                 background: var(--primary-gradient);
-                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 4px 20px rgba(247, 147, 30, 0.5);
                 transform: scale(1.02);
             }
             30% {
                 background: var(--primary-gradient);
-                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 4px 20px rgba(247, 147, 30, 0.5);
                 transform: scale(1);
             }
             100% {
@@ -1760,11 +1770,11 @@
                     itemStyle: {
                         borderRadius: [4, 8, 8, 4],
                         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            { offset: 0, color: '#667eea' },
-                            { offset: 0.5, color: '#764ba2' },
-                            { offset: 1, color: '#f093fb' }
+                            { offset: 0, color: '#f7931e' },
+                            { offset: 0.5, color: '#ff8f00' },
+                            { offset: 1, color: '#ffb347' }
                         ]),
-                        shadowColor: 'rgba(102, 126, 234, 0.3)',
+                        shadowColor: 'rgba(247, 147, 30, 0.3)',
                         shadowBlur: 8,
                         shadowOffsetX: 2,
                         shadowOffsetY: 2
@@ -1772,11 +1782,11 @@
                     emphasis: {
                         itemStyle: {
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                                { offset: 0, color: '#7c8ff8' },
-                                { offset: 0.5, color: '#8b5dc7' },
-                                { offset: 1, color: '#f5a9fc' }
+                                { offset: 0, color: '#ffa726' },
+                                { offset: 0.5, color: '#ffb74d' },
+                                { offset: 1, color: '#ffcc80' }
                             ]),
-                            shadowColor: 'rgba(102, 126, 234, 0.5)',
+                            shadowColor: 'rgba(247, 147, 30, 0.5)',
                             shadowBlur: 15,
                             shadowOffsetX: 3,
                             shadowOffsetY: 3
@@ -1878,8 +1888,8 @@
             const skillCanvas = document.getElementById('skillDamageChart');
             const skillCtx = skillCanvas.getContext('2d');
             const skillGradient = skillCtx.createLinearGradient(0, 0, skillCanvas.width || 400, 0);
-            skillGradient.addColorStop(0, '#667eea');
-            skillGradient.addColorStop(1, '#764ba2');
+            skillGradient.addColorStop(0, '#f7931e');
+            skillGradient.addColorStop(1, '#ff6f00');
 
             updateChart('skillDamageChart', 'bar', {
                 labels: skillLabels,
@@ -1922,8 +1932,8 @@
             const targetCanvas = document.getElementById('targetDamageChart');
             const targetCtx = targetCanvas.getContext('2d');
             const targetGradient = targetCtx.createLinearGradient(0, 0, 0, targetCanvas.height || 300);
-            targetGradient.addColorStop(0, '#764ba2');
-            targetGradient.addColorStop(1, '#667eea');
+            targetGradient.addColorStop(0, '#ff6f00');
+            targetGradient.addColorStop(1, '#f7931e');
 
             updateChart('targetDamageChart', 'bar', {
                 labels: targetLabels,
