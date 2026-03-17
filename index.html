@@ -1407,6 +1407,17 @@
             const echart = echarts.init(chartDom);
             charts['playerDamageChart'] = echart;
 
+            // 构建 Y 轴标签数据（名字 + 图标）
+            const yAxisData = playerNames.map((name, index) => {
+                const breedId = combat.playersBreed[name] || '0';
+                const iconPath = getBreedIconPath(breedId);
+                return {
+                    value: name,
+                    iconPath: iconPath,
+                    breedId: breedId
+                };
+            });
+
             const option = {
                 tooltip: {
                     trigger: 'axis',
@@ -1433,12 +1444,31 @@
                 },
                 yAxis: {
                     type: 'category',
-                    data: playerNames,
+                    data: yAxisData,
                     axisLine: { show: false },
                     axisTick: { show: false },
                     axisLabel: {
                         color: '#333',
-                        fontSize: 12
+                        fontSize: 12,
+                        formatter: function(value, index) {
+                            const item = yAxisData[index];
+                            if (item) {
+                                return `{name|${value}} {icon${index}|}`;
+                            }
+                            return value;
+                        },
+                        rich: yAxisData.reduce((acc, item, index) => {
+                            const img = iconCache[item.iconPath] || iconCache['asset/breed/0.png'];
+                            acc[`icon${index}`] = {
+                                height: 16,
+                                width: 16,
+                                backgroundColor: {
+                                    image: img && img.complete ? img.src : ''
+                                },
+                                borderRadius: 2
+                            };
+                            return acc;
+                        }, { name: { color: '#333', fontSize: 12 } })
                     }
                 },
                 series: [{
@@ -1467,60 +1497,6 @@
             };
 
             echart.setOption(option);
-
-            // 渲染完成后绘制职业图标
-            echart.on('finished', function() {
-                const chartModel = echart.getModel();
-                const seriesModel = chartModel.getSeriesByIndex(0);
-                const view = echart.getViewOfSeriesModel(seriesModel);
-                const group = view.group;
-
-                // 获取图表实例的 canvas 上下文
-                const zr = echart.getZr();
-                const width = zr.getWidth();
-                const height = zr.getHeight();
-
-                // 创建自定义图形层来绘制图标
-                playerNames.forEach((playerName, index) => {
-                    const breedId = combat.playersBreed[playerName] || '0';
-                    const iconPath = getBreedIconPath(breedId);
-                    const img = iconCache[iconPath] || iconCache['asset/breed/0.png'];
-
-                    if (img && img.complete) {
-                        // 获取柱状条的位置信息
-                        const coordSys = seriesModel.coordinateSystem;
-                        const barLayout = coordSys.getRect();
-                        const categoryAxis = coordSys.getAxis('y');
-                        const valueAxis = coordSys.getAxis('x');
-
-                        const bandWidth = categoryAxis.getBandWidth();
-                        const y = categoryAxis.toGlobalCoord(categoryAxis.dataToCoord(index));
-                        const x = valueAxis.toGlobalCoord(valueAxis.dataToCoord(sortedData[index]));
-
-                        // 计算图标大小（与柱状条高度一致）
-                        const iconSize = Math.max(bandWidth - 4, 16);
-
-                        // 图标位置：紧挨着柱状条左侧
-                        const iconX = x - iconSize - 4;
-                        const iconY = y - iconSize / 2;
-
-                        // 检查是否有足够空间
-                        if (iconX > barLayout.x + 30) {
-                            const iconGraphic = new echarts.graphic.Image({
-                                style: {
-                                    image: img.src,
-                                    x: iconX,
-                                    y: iconY,
-                                    width: iconSize,
-                                    height: iconSize,
-                                    borderRadius: 2
-                                }
-                            });
-                            zr.add(iconGraphic);
-                        }
-                    }
-                });
-            });
         }
 
         // 更新玩家网格
