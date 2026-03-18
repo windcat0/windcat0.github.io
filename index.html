@@ -412,8 +412,8 @@
         .stat-card h4 {
             color: #64748b;
             margin-bottom: 8px;
-            font-size: 0.9em;
-            font-weight: 500;
+            font-size: 1.1em;
+            font-weight: 700;
         }
 
         .stat-card .value {
@@ -1778,7 +1778,11 @@
                                     backgroundColor: {
                                         image: img && img.complete ? img.src : ''
                                     },
-                                    borderRadius: 6
+                                    borderRadius: 6,
+                                    shadowBlur: 8,
+                                    shadowColor: 'rgba(0, 0, 0, 0.3)',
+                                    shadowOffsetX: 0,
+                                    shadowOffsetY: 0
                                 };
                                 return acc;
                             }, { name: { color: '#333', fontSize: 16, fontWeight: 'bold' } })
