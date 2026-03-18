@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>汪汪队出击 - Wakfu Combat Logs Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -11,47 +12,118 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #3CB3A8;
+            --primary-dark: #2A9D8F;
+            --primary-light: #4ECDC4;
+            --secondary-color: #8B2F5C;
+            --secondary-dark: #6B1F3F;
+            --accent-color: #4ECDC4;
+            --accent-light: #6EDDD4;
+            --primary-gradient: linear-gradient(135deg, #3CB3A8 0%, #2A9D8F 100%);
+            --secondary-gradient: linear-gradient(135deg, #8B2F5C 0%, #6B1F3F 100%);
+            --accent-gradient: linear-gradient(135deg, #4ECDC4 0%, #3CB3A8 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.2);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0d3d3a 0%, #1a5f5a 50%, #0d3d3a 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(60, 179, 168, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 47, 92, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.08) 0%, transparent 40%);
+            animation: bgFloat 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3CB3A8 0%, #2A9D8F 50%, #1a5f5a 100%);
             color: white;
-            padding: 30px;
+            padding: 30px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 3.5em;
             margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            letter-spacing: 2px;
+            font-family: 'STKaiti', 'KaiTi', serif;
         }
 
         .header .version {
-            font-size: 0.9em;
+            font-size: 0.95em;
             opacity: 0.9;
+            position: relative;
+            font-weight: 300;
         }
 
         .header .disclaimer {
             font-size: 0.85em;
-            margin-top: 15px;
+            margin-top: 20px;
             opacity: 0.85;
             text-align: left;
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
+            position: relative;
+            line-height: 1.6;
         }
 
         .main-content {
@@ -62,23 +134,37 @@
         }
 
         .sidebar {
-            background: #f8f9fa;
-            border-right: 1px solid #e0e0e0;
-            padding: 20px;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 24px;
         }
 
         .upload-section {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .upload-section h3 {
-            margin-bottom: 15px;
-            color: #333;
+            margin-bottom: 16px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-section h3::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
         }
 
         .file-input-wrapper {
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .file-input-wrapper input[type="file"] {
@@ -87,118 +173,196 @@
 
         .file-input-label {
             display: block;
-            padding: 15px;
+            padding: 20px;
             background: white;
-            border: 2px dashed #667eea;
-            border-radius: 8px;
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius-md);
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
+            color: #64748b;
         }
 
         .file-input-label:hover {
-            background: #f0f0ff;
-            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn {
             width: 100%;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px 24px;
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
         }
 
         .btn:disabled {
-            background: #ccc;
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+        }
+
+        .btn:disabled::before {
+            display: none;
         }
 
         .combat-list {
-            margin-top: 20px;
+            margin-top: 24px;
         }
 
         .combat-list h3 {
-            margin-bottom: 10px;
-            color: #333;
+            margin-bottom: 12px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .combat-list h3::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
         }
 
         .combat-item {
-            padding: 12px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            margin-bottom: 8px;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .combat-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: transparent;
+            transition: var(--transition);
         }
 
         .combat-item:hover {
-            background: #f0f0ff;
-            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(60, 179, 168, 0.1) 0%, rgba(42, 157, 143, 0.1) 100%);
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .combat-item:hover::before {
+            background: var(--primary-gradient);
         }
 
         .combat-item.active {
-            background: #667eea;
+            background: var(--primary-gradient);
             color: white;
-            border-color: #667eea;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(60, 179, 168, 0.4);
+        }
+
+        .combat-item.active::before {
+            background: white;
         }
 
         .combat-item .combat-id {
-            font-weight: bold;
-            font-size: 1.1em;
+            font-weight: 600;
+            font-size: 1.05em;
         }
 
         .combat-item .combat-info {
             font-size: 0.85em;
-            margin-top: 5px;
-            opacity: 0.8;
+            margin-top: 6px;
+            opacity: 0.75;
         }
 
         .content-area {
-            padding: 20px;
+            padding: 24px;
+            background: #ffffff;
         }
 
         .tabs {
             display: flex;
-            border-bottom: 2px solid #e0e0e0;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 24px;
+            gap: 4px;
         }
 
         .tab {
-            padding: 12px 24px;
+            padding: 14px 28px;
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 16px;
-            color: #666;
-            transition: all 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+            color: #64748b;
+            transition: var(--transition);
             border-bottom: 3px solid transparent;
             margin-bottom: -2px;
+            position: relative;
         }
 
         .tab:hover {
-            color: #667eea;
+            color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
         }
 
         .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
         }
 
         .tab-content {
             display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .tab-content.active {
@@ -208,99 +372,175 @@
         .stats-grid {
             display: flex;
             flex-wrap: nowrap;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 16px;
+            margin-bottom: 28px;
         }
 
         .stat-card {
             flex: 1;
-            background: white;
-            border-radius: 8px;
-            padding: 12px 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
         }
 
         .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-card h4 {
-            color: #666;
-            margin-bottom: 6px;
-            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            font-weight: 700;
         }
 
         .stat-card .value {
-            font-size: 1.6em;
-            font-weight: bold;
-            color: #333;
+            font-size: 1.8em;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .player-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 28px;
         }
 
         .player-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--transition);
             border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .player-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-md);
+        }
+
+        .player-card:hover::after {
+            transform: scaleX(1);
         }
 
         .player-card.selected {
-            border-color: #667eea;
-            background: #f0f0ff;
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(60, 179, 168, 0.1) 0%, rgba(42, 157, 143, 0.1) 100%);
+        }
+
+        .player-card.selected::after {
+            transform: scaleX(1);
         }
 
         .player-card .name {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            color: #1e293b;
+        }
+
+        .player-card-icon {
+            width: 50px;
+            height: 50px;
+            margin-right: 14px;
+            border-radius: 10px;
+            vertical-align: middle;
+            object-fit: contain;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .player-card .breed {
-            color: #666;
-            font-size: 0.9em;
+            color: #64748b;
+            font-size: 1em;
         }
 
         .player-card .damage {
-            margin-top: 10px;
-            font-size: 1.2em;
-            color: #667eea;
-            font-weight: bold;
+            margin-top: 20px;
+            font-size: 1.8em;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .chart-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
         }
 
         .chart-container h4 {
-            margin-bottom: 15px;
-            color: #333;
+            margin-bottom: 18px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .element-fire { color: #ff6b6b; }
-        .element-water { color: #4ecdc4; }
+        .chart-container h4::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        .element-fire { color: #ef4444; }
+        .element-water { color: #06b6d4; }
         .element-air { color: #a855f7; }
-        .element-earth { color: #84cc16; }
-        .element-neutral { color: #9ca3af; }
+        .element-earth { color: #22c55e; }
+        .element-neutral { color: #6b7280; }
 
         .detail-section {
             display: none;
@@ -308,78 +548,117 @@
 
         .detail-section.active {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
 
         .element-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .element-stat {
-            padding: 15px;
-            border-radius: 8px;
+            padding: 18px;
+            border-radius: var(--radius-md);
             text-align: center;
+            transition: var(--transition);
         }
 
-        .element-stat.fire { background: #fff0f0; border: 2px solid #ff6b6b; }
-        .element-stat.water { background: #f0ffff; border: 2px solid #4ecdc4; }
-        .element-stat.air { background: #faf0ff; border: 2px solid #a855f7; }
-        .element-stat.earth { background: #f0fff0; border: 2px solid #84cc16; }
+        .element-stat.fire { 
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
+            border: 2px solid #fecaca;
+        }
+        .element-stat.water { 
+            background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); 
+            border: 2px solid #a5f3fc;
+        }
+        .element-stat.air { 
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); 
+            border: 2px solid #e9d5ff;
+        }
+        .element-stat.earth { 
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+            border: 2px solid #bbf7d0;
+        }
+
+        .element-stat:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
 
         .element-stat .label {
             font-size: 0.9em;
-            color: #666;
-            margin-bottom: 5px;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 500;
         }
 
         .element-stat .value {
-            font-size: 1.5em;
-            font-weight: bold;
+            font-size: 1.6em;
+            font-weight: 700;
         }
+
+        .element-stat.fire .value { color: #ef4444; }
+        .element-stat.water .value { color: #06b6d4; }
+        .element-stat.air .value { color: #a855f7; }
+        .element-stat.earth .value { color: #22c55e; }
 
         .data-table {
             width: 100%;
             border-collapse: collapse;
             background: white;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm);
         }
 
         .data-table th {
-            background: #667eea;
+            background: var(--primary-gradient);
             color: white;
-            padding: 12px;
+            padding: 14px 16px;
             text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .data-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
         }
 
-        .data-table tr:hover {
-            background: #f8f9fa;
+        .data-table tr {
+            transition: var(--transition);
+        }
+
+        .data-table tbody tr:hover {
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #666;
+            padding: 50px;
+            color: #64748b;
+            font-size: 1.1em;
         }
 
         .loading::after {
             content: '';
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #667eea;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--primary-color);
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
+            margin-left: 12px;
             vertical-align: middle;
         }
 
@@ -387,27 +666,31 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 渐变高亮效果 */
         @keyframes highlight-fade {
             0% {
-                background-color: #667eea;
+                background: var(--primary-gradient);
+                box-shadow: 0 4px 20px rgba(247, 147, 30, 0.5);
+                transform: scale(1.02);
+            }
+            30% {
+                background: var(--primary-gradient);
+                box-shadow: 0 4px 20px rgba(247, 147, 30, 0.5);
+                transform: scale(1);
             }
             100% {
-                background-color: white;
+                background: white;
+                box-shadow: none;
+                transform: scale(1);
             }
         }
 
         .combat-item.highlight {
-            animation: highlight-fade 3s ease-out;
+            animation: highlight-fade 2.5s ease-out forwards;
         }
 
         .combat-item.highlight .combat-id,
         .combat-item.highlight .combat-info {
             color: white;
-        }
-
-        .combat-item.highlight .combat-id {
-            transition: color 0s;
         }
 
         .combat-item.highlight.fade-out .combat-id,
@@ -417,19 +700,28 @@
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #999;
+            padding: 80px 20px;
+            color: #94a3b8;
         }
 
         .empty-state h3 {
-            margin-bottom: 10px;
-            color: #666;
+            margin-bottom: 12px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            font-size: 0.95em;
         }
 
         .position-canvas {
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-top: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: var(--radius-md);
+            margin-top: 24px;
+        }
+
+        #playerDamageChart {
+            min-height: 350px;
         }
 
         @media (max-width: 768px) {
@@ -439,11 +731,19 @@
 
             .sidebar {
                 border-right: none;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.06);
             }
 
             .element-stats {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-grid {
+                flex-wrap: wrap;
+            }
+
+            .stat-card {
+                min-width: calc(50% - 8px);
             }
         }
     </style>
@@ -461,7 +761,7 @@
                     <h3>上传日志文件</h3>
 
                     <div class="file-input-wrapper">
-                        <input type="file" id="fileInput" multiple accept=".log,.log.1,.log.2,.txt">
+                        <input type="file" id="fileInput" multiple accept=".log,.log.1,.log.2,.log.3,.txt">
                         <label for="fileInput" class="file-input-label">
                             点击选择日志文件<br>
                             <small>支持 wakfu.log, wakfu.log.1 等</small>
@@ -516,7 +816,7 @@
 
                         <div class="chart-container">
                             <h4>玩家伤害排行</h4>
-                            <canvas id="playerDamageChart"></canvas>
+                            <div id="playerDamageChart" style="width: 100%; height: 400px;"></div>
                         </div>
                     </div>
                 </div>
@@ -652,6 +952,78 @@
             'Neutral': '#9ca3af'
         };
 
+        // ========== 职业图标功能 ==========
+
+        // 检查 breed ID 是否有效
+        function isValidBreedId(breedId) {
+            const id = parseInt(breedId, 10);
+            return id >= 1 && id <= 19;
+        }
+
+        // 获取职业图标路径
+        function getBreedIconPath(breedId) {
+            const id = String(breedId);
+            if (isValidBreedId(id)) {
+                return `asset/breed/${id}.png`;
+            }
+            return 'asset/breed/0.png';
+        }
+
+        // 柱状图图标样式配置
+        const CHART_ICON_STYLE = {
+            width: 18,
+            height: 18,
+            marginRight: 4,
+            borderRadius: 2,
+            verticalAlign: 'middle'
+        };
+
+        // 玩家卡片图标样式配置
+        const CARD_ICON_STYLE = {
+            width: 24,
+            height: 24,
+            marginRight: 8,
+            borderRadius: 4,
+            verticalAlign: 'middle'
+        };
+
+        // 图标缓存
+        const iconCache = {};
+
+        // 预加载职业图标
+        function preloadBreedIcon(breedId) {
+            const path = getBreedIconPath(breedId);
+            if (iconCache[path]) {
+                return Promise.resolve(iconCache[path]);
+            }
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    iconCache[path] = img;
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    // 加载失败，使用默认图标
+                    const defaultPath = 'asset/breed/0.png';
+                    if (iconCache[defaultPath]) {
+                        resolve(iconCache[defaultPath]);
+                    } else {
+                        const defaultImg = new Image();
+                        defaultImg.onload = () => {
+                            iconCache[defaultPath] = defaultImg;
+                            resolve(defaultImg);
+                        };
+                        defaultImg.onerror = () => {
+                            // 默认图标也加载失败，返回 null
+                            resolve(null);
+                        };
+                        defaultImg.src = defaultPath;
+                    }
+                };
+                img.src = path;
+            });
+        }
+
         // CombatData 类
         class CombatData {
             constructor() {
@@ -686,6 +1058,15 @@
                 });
             }
 
+            // 获取召唤物的主人，如果不是召唤物则返回自身
+            getSummoner(caster) {
+                const match = caster.match(/\(([^)]+)\)$/);
+                if (match) {
+                    return match[1].trim();
+                }
+                return caster;
+            }
+
             getStats() {
                 const stats = {
                     playerDamage: {},
@@ -699,31 +1080,33 @@
 
                 for (const entry of this.data) {
                     const dmg = parseInt(entry.damage) || 0;
-                    const isPlayerCaster = this.isTeamMember(entry.caster, true);
-                    const isPlayerTarget = this.isTeamMember(entry.target, true);
+                    const caster = this.getSummoner(entry.caster);
+                    const target = this.getSummoner(entry.target);
+                    const isPlayerCaster = this.isTeamMember(caster, true);
+                    const isPlayerTarget = this.isTeamMember(target, true);
 
                     // 伤害统计
                     if (dmg < 0) {
                         if (isPlayerCaster) {
-                            stats.playerDamage[entry.caster] = (stats.playerDamage[entry.caster] || 0) - dmg;
+                            stats.playerDamage[caster] = (stats.playerDamage[caster] || 0) - dmg;
                             stats.elements[entry.element] = (stats.elements[entry.element] || 0) - dmg;
                         } else {
-                            stats.npcDamage[entry.caster] = (stats.npcDamage[entry.caster] || 0) - dmg;
+                            stats.npcDamage[caster] = (stats.npcDamage[caster] || 0) - dmg;
                         }
 
                         if (isPlayerTarget) {
-                            stats.playerTaken[entry.target] = (stats.playerTaken[entry.target] || 0) - dmg;
+                            stats.playerTaken[target] = (stats.playerTaken[target] || 0) - dmg;
                         } else {
-                            stats.npcTaken[entry.target] = (stats.npcTaken[entry.target] || 0) - dmg;
+                            stats.npcTaken[target] = (stats.npcTaken[target] || 0) - dmg;
                         }
                     }
 
                     // 治疗/护盾统计
                     if (dmg > 0) {
                         if (isPlayerCaster) {
-                            stats.playerHeal[entry.caster] = (stats.playerHeal[entry.caster] || 0) + dmg;
+                            stats.playerHeal[caster] = (stats.playerHeal[caster] || 0) + dmg;
                         } else {
-                            stats.npcHeal[entry.caster] = (stats.npcHeal[entry.caster] || 0) + dmg;
+                            stats.npcHeal[caster] = (stats.npcHeal[caster] || 0) + dmg;
                         }
                     }
                 }
@@ -742,20 +1125,23 @@
                 };
 
                 for (const entry of this.data) {
-                    if (entry.caster === playerName) {
+                    const caster = this.getSummoner(entry.caster);
+                    const target = this.getSummoner(entry.target);
+                    
+                    if (caster === playerName) {
                         const dmg = parseInt(entry.damage) || 0;
                         if (dmg < 0) {
                             detail.damage -= dmg;
                             detail.elements[entry.element] = (detail.elements[entry.element] || 0) - dmg;
                             detail.skills[entry.desc] = (detail.skills[entry.desc] || 0) - dmg;
-                            if (entry.target !== playerName) {
-                                detail.targets[entry.target] = (detail.targets[entry.target] || 0) - dmg;
+                            if (target !== playerName) {
+                                detail.targets[target] = (detail.targets[target] || 0) - dmg;
                             }
                         } else {
                             detail.heal += dmg;
                         }
                     }
-                    if (entry.target === playerName) {
+                    if (target === playerName) {
                         const dmg = parseInt(entry.damage) || 0;
                         if (dmg < 0) {
                             detail.taken -= dmg;
@@ -1037,10 +1423,17 @@
                                 let damageElement = 'Neutral';
                                 let isBlock = false;
 
-                                for (const elem of ['FIRE', 'WATER', 'EARTH', 'AIR']) {
-                                    const elemName = getElementName(elem);
-                                    if (modifiers.some(m => m.includes(elem) || m.includes(elemName))) {
-                                        damageElement = elemName;
+                                // 元素名称映射（包含中文）
+                                const elementMap = {
+                                    'FIRE': ['FIRE', 'Fire', '火', '火系'],
+                                    'WATER': ['WATER', 'Water', '水', '水系'],
+                                    'EARTH': ['EARTH', 'Earth', '土', '土系'],
+                                    'AIR': ['AIR', 'Air', '风', '风系']
+                                };
+
+                                for (const [key, values] of Object.entries(elementMap)) {
+                                    if (modifiers.some(m => values.some(value => m.includes(value)))) {
+                                        damageElement = getElementName(key);
                                         break;
                                     }
                                 }
@@ -1058,7 +1451,11 @@
                                     !m.includes('FIRE') && !m.includes('WATER') && 
                                     !m.includes('EARTH') && !m.includes('AIR') &&
                                     !m.includes('Fire') && !m.includes('Water') && 
-                                    !m.includes('Earth') && !m.includes('Air')
+                                    !m.includes('Earth') && !m.includes('Air') &&
+                                    !m.includes('火') && !m.includes('水') && 
+                                    !m.includes('土') && !m.includes('风') &&
+                                    !m.includes('火系') && !m.includes('水系') && 
+                                    !m.includes('土系') && !m.includes('风系')
                                 );
 
                                 // 确定伤害来源和描述
@@ -1208,7 +1605,7 @@
             });
         }
 
-        // 更新战斗列表（带渐变高亮）
+        // 更新战斗列表（从上到下依次加载）
         function updateCombatListWithHighlight() {
             const listContainer = document.getElementById('combatList');
             const combats = Object.entries(combatDataDict);
@@ -1220,40 +1617,50 @@
 
             combats.sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
 
-            listContainer.innerHTML = combats.map(([id, combat]) => {
+            // 清空容器
+            listContainer.innerHTML = '';
+
+            // 依次添加战斗项，实现从上到下的加载效果
+            combats.forEach(([id, combat], index) => {
                 const playerCount = combat.players.length;
                 const mobCount = combat.mobs.length;
-                return `
-                    <div class="combat-item highlight" data-combat-id="${id}">
-                        <div class="combat-id">战斗 #${id}</div>
-                        <div class="combat-info">
-                            玩家: ${playerCount} | NPC: ${mobCount}
-                        </div>
+                const isActive = id === currentCombatId;
+                const classes = isActive ? 'combat-item active' : 'combat-item';
+                
+                const combatItem = document.createElement('div');
+                combatItem.className = classes;
+                combatItem.dataset.combatId = id;
+                combatItem.innerHTML = `
+                    <div class="combat-id">战斗 #${id}</div>
+                    <div class="combat-info">
+                        玩家: ${playerCount} | NPC: ${mobCount}
                     </div>
                 `;
-            }).join('');
-
-            // 绑定点击事件
-            listContainer.querySelectorAll('.combat-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const combatId = item.dataset.combatId;
+                
+                // 设置初始状态
+                combatItem.style.opacity = '0';
+                combatItem.style.transform = 'translateY(20px)';
+                combatItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                
+                // 添加到容器
+                listContainer.appendChild(combatItem);
+                
+                // 延迟显示，实现依次加载效果
+                setTimeout(() => {
+                    combatItem.style.opacity = '1';
+                    combatItem.style.transform = 'translateY(0)';
+                }, index * 100);
+                
+                // 绑定点击事件
+                combatItem.addEventListener('click', () => {
+                    const combatId = combatItem.dataset.combatId;
                     selectCombat(combatId);
 
                     // 更新选中状态
                     listContainer.querySelectorAll('.combat-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
+                    combatItem.classList.add('active');
                 });
             });
-
-            // 3秒后移除高亮效果
-            setTimeout(() => {
-                listContainer.querySelectorAll('.combat-item.highlight').forEach(item => {
-                    item.classList.add('fade-out');
-                    setTimeout(() => {
-                        item.classList.remove('highlight', 'fade-out');
-                    }, 300);
-                });
-            }, 2700);
         }
 
         // 选择战斗
@@ -1280,7 +1687,7 @@
         }
 
         // 更新总览
-        function updateOverview(combat) {
+        async function updateOverview(combat) {
             const stats = combat.getStats();
 
             // 计算总数
@@ -1294,97 +1701,150 @@
             document.getElementById('playerTotalHeal').textContent = formatNumber(playerTotalHeal);
             document.getElementById('npcTotalDamage').textContent = formatNumber(npcTotalDmg);
 
-            // 玩家伤害排行图表 - 降序排列、显示职业名字、百分比显示在柱状图右侧
+            // 玩家伤害排行图表 - 使用 ECharts
             // 将对象转换为数组并排序（降序）
             const playerDamageArray = Object.entries(stats.playerDamage)
                 .sort((a, b) => {
-                    // 降序排列：伤害高的在前
                     if (b[1] !== a[1]) {
                         return b[1] - a[1];
                     }
-                    // 伤害相同时，按玩家名称字母顺序排列
                     return a[0].localeCompare(b[0]);
                 });
 
-            // 构建带职业名称的标签（不包含百分比）
-            const sortedLabels = playerDamageArray.map(item => {
-                const playerName = item[0];
-                const breedId = combat.playersBreed[playerName] || '0';
-                const breedName = breedNames[breedId] || '未知';
-                return `${playerName}（${breedName}）`;
-            });
-
+            const playerNames = playerDamageArray.map(item => item[0]);
             const sortedData = playerDamageArray.map(item => item[1]);
-
-            // 创建渐变色
-            const canvas = document.getElementById('playerDamageChart');
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width || 400, 0);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-
-            // 保存 playerTotalDmg 供动画完成后使用
             const totalDmg = playerTotalDmg;
 
-            updateChart('playerDamageChart', 'bar', {
-                labels: sortedLabels,
-                datasets: [{
-                    label: '伤害',
-                    data: sortedData,
-                    backgroundColor: gradient,
-                    borderRadius: 6
-                }]
-            }, {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const percentage = ((value / totalDmg) * 100).toFixed(1);
-                                return `伤害: ${formatNumber(value)} (${percentage}%)`;
-                            }
-                        }
+            // 预加载所有图标
+            const breedIds = [...new Set(playerNames.map(name => combat.playersBreed[name] || '0'))];
+            await Promise.all(breedIds.map(id => preloadBreedIcon(id)));
+
+            // 初始化或更新 ECharts
+            const chartDom = document.getElementById('playerDamageChart');
+            if (!chartDom) return;
+
+            if (charts['playerDamageChart']) {
+                charts['playerDamageChart'].dispose();
+            }
+
+            const echart = echarts.init(chartDom);
+            charts['playerDamageChart'] = echart;
+
+            // 构建 Y 轴标签数据（名字 + 图标）
+            const yAxisData = playerNames.map((name, index) => {
+                const breedId = combat.playersBreed[name] || '0';
+                const iconPath = getBreedIconPath(breedId);
+                return {
+                    value: name,
+                    iconPath: iconPath,
+                    breedId: breedId
+                };
+            });
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        const value = params[0].value;
+                        const percentage = ((value / totalDmg) * 100).toFixed(1);
+                        return `${params[0].name}<br/>伤害: ${formatNumber(value)} (${percentage}%)`;
                     }
                 },
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
+                grid: {
+                    left: '3%',
+                    right: '15%',
+                    bottom: '3%',
+                    top: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    splitLine: {
+                        lineStyle: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    axisLine: { show: false }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: yAxisData,
+                    inverse: true,
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: {
+                            color: '#333',
+                            fontSize: 16,
+                            formatter: function(value, index) {
+                                const item = yAxisData[index];
+                                if (item) {
+                                    return `{name|${value}} {icon${index}|}`;
+                                }
+                                return value;
+                            },
+                            rich: yAxisData.reduce((acc, item, index) => {
+                                const img = iconCache[item.iconPath] || iconCache['asset/breed/0.png'];
+                                acc[`icon${index}`] = {
+                                    height: 36,
+                                    width: 36,
+                                    backgroundColor: {
+                                        image: img && img.complete ? img.src : ''
+                                    },
+                                    borderRadius: 6,
+                                    shadowBlur: 8,
+                                    shadowColor: 'rgba(0, 0, 0, 0.3)',
+                                    shadowOffsetX: 0,
+                                    shadowOffsetY: 0
+                                };
+                                return acc;
+                            }, { name: { color: '#333', fontSize: 16, fontWeight: 'bold' } })
+                        }
+                },
+                series: [{
+                    type: 'bar',
+                    data: sortedData,
+                    barWidth: '55%',
+                    barMinHeight: 8,
+                    itemStyle: {
+                        borderRadius: [4, 8, 8, 4],
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#3CB3A8' },
+                            { offset: 0.5, color: '#4ECDC4' },
+                            { offset: 1, color: '#6EDDD4' }
+                        ]),
+                        shadowColor: 'rgba(60, 179, 168, 0.3)',
+                        shadowBlur: 8,
+                        shadowOffsetX: 2,
+                        shadowOffsetY: 2
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                                { offset: 0, color: '#4ECDC4' },
+                                { offset: 0.5, color: '#6EDDD4' },
+                                { offset: 1, color: '#8EFEF6' }
+                            ]),
+                            shadowColor: 'rgba(60, 179, 168, 0.5)',
+                            shadowBlur: 15,
+                            shadowOffsetX: 3,
+                            shadowOffsetY: 3
                         }
                     },
-                    y: {
-                        grid: {
-                            display: false
-                        }
+                    label: {
+                        show: true,
+                        position: 'right',
+                        formatter: function(params) {
+                            const percentage = ((params.value / totalDmg) * 100).toFixed(1);
+                            return percentage + '%';
+                        },
+                        color: '#64748b',
+                        fontWeight: 'bold',
+                        fontSize: 16,
+                        distance: 12
                     }
-                },
-                animation: {
-                    duration: 800,
-                    easing: 'easeOutQuart',
-                    onComplete: function() {
-                        const chart = this;
-                        const ctx = chart.ctx;
-                        ctx.save();
-                        chart.data.datasets.forEach((dataset, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            meta.data.forEach((bar, index) => {
-                                const value = dataset.data[index];
-                                const percentage = ((value / totalDmg) * 100).toFixed(1) + '%';
-                                ctx.fillStyle = '#666';
-                                ctx.font = 'bold 11px sans-serif';
-                                ctx.textAlign = 'left';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(percentage, bar.x + 8, bar.y);
-                            });
-                        });
-                        ctx.restore();
-                    }
-                }
-            });
+                }]
+            };
+
+            echart.setOption(option);
         }
 
         // 更新玩家网格
@@ -1396,10 +1856,18 @@
                 const breed = combat.playersBreed[player] || '0';
                 const breedName = breedNames[breed] || '未知';
                 const damage = stats.playerDamage[player] || 0;
+                const iconPath = getBreedIconPath(breed);
 
                 return `
                     <div class="player-card" data-player="${player}" data-index="${index}">
-                        <div class="name">${player}</div>
+                        <div class="name">
+                            <img class="player-card-icon" 
+                                 src="${iconPath}" 
+                                 alt="${breedName}"
+                                 onerror="this.src='asset/breed/0.png'"
+                                 loading="lazy">
+                            <span>${player}</span>
+                        </div>
                         <div class="breed">${breedName}</div>
                         <div class="damage">${formatNumber(damage)} 伤害</div>
                     </div>
@@ -1457,8 +1925,8 @@
             const skillCanvas = document.getElementById('skillDamageChart');
             const skillCtx = skillCanvas.getContext('2d');
             const skillGradient = skillCtx.createLinearGradient(0, 0, skillCanvas.width || 400, 0);
-            skillGradient.addColorStop(0, '#667eea');
-            skillGradient.addColorStop(1, '#764ba2');
+            skillGradient.addColorStop(0, '#f7931e');
+            skillGradient.addColorStop(1, '#ff6f00');
 
             updateChart('skillDamageChart', 'bar', {
                 labels: skillLabels,
@@ -1501,8 +1969,8 @@
             const targetCanvas = document.getElementById('targetDamageChart');
             const targetCtx = targetCanvas.getContext('2d');
             const targetGradient = targetCtx.createLinearGradient(0, 0, 0, targetCanvas.height || 300);
-            targetGradient.addColorStop(0, '#764ba2');
-            targetGradient.addColorStop(1, '#667eea');
+            targetGradient.addColorStop(0, '#ff6f00');
+            targetGradient.addColorStop(1, '#f7931e');
 
             updateChart('targetDamageChart', 'bar', {
                 labels: targetLabels,
@@ -1541,7 +2009,7 @@
         // 更新伤害表格
         function updateDamageTable(combat) {
             const tbody = document.getElementById('damageTableBody');
-            const data = combat.data.slice(0, 100); // 只显示前100条
+            const data = combat.data; // 显示所有伤害记录
 
             tbody.innerHTML = data.map(entry => {
                 const dmg = parseInt(entry.damage) || 0;
