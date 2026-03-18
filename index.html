@@ -1057,6 +1057,15 @@
                 });
             }
 
+            // 获取召唤物的主人，如果不是召唤物则返回自身
+            getSummoner(caster) {
+                const match = caster.match(/\(([^)]+)\)$/);
+                if (match) {
+                    return match[1].trim();
+                }
+                return caster;
+            }
+
             getStats() {
                 const stats = {
                     playerDamage: {},
@@ -1070,31 +1079,33 @@
 
                 for (const entry of this.data) {
                     const dmg = parseInt(entry.damage) || 0;
-                    const isPlayerCaster = this.isTeamMember(entry.caster, true);
-                    const isPlayerTarget = this.isTeamMember(entry.target, true);
+                    const caster = this.getSummoner(entry.caster);
+                    const target = this.getSummoner(entry.target);
+                    const isPlayerCaster = this.isTeamMember(caster, true);
+                    const isPlayerTarget = this.isTeamMember(target, true);
 
                     // 伤害统计
                     if (dmg < 0) {
                         if (isPlayerCaster) {
-                            stats.playerDamage[entry.caster] = (stats.playerDamage[entry.caster] || 0) - dmg;
+                            stats.playerDamage[caster] = (stats.playerDamage[caster] || 0) - dmg;
                             stats.elements[entry.element] = (stats.elements[entry.element] || 0) - dmg;
                         } else {
-                            stats.npcDamage[entry.caster] = (stats.npcDamage[entry.caster] || 0) - dmg;
+                            stats.npcDamage[caster] = (stats.npcDamage[caster] || 0) - dmg;
                         }
 
                         if (isPlayerTarget) {
-                            stats.playerTaken[entry.target] = (stats.playerTaken[entry.target] || 0) - dmg;
+                            stats.playerTaken[target] = (stats.playerTaken[target] || 0) - dmg;
                         } else {
-                            stats.npcTaken[entry.target] = (stats.npcTaken[entry.target] || 0) - dmg;
+                            stats.npcTaken[target] = (stats.npcTaken[target] || 0) - dmg;
                         }
                     }
 
                     // 治疗/护盾统计
                     if (dmg > 0) {
                         if (isPlayerCaster) {
-                            stats.playerHeal[entry.caster] = (stats.playerHeal[entry.caster] || 0) + dmg;
+                            stats.playerHeal[caster] = (stats.playerHeal[caster] || 0) + dmg;
                         } else {
-                            stats.npcHeal[entry.caster] = (stats.npcHeal[entry.caster] || 0) + dmg;
+                            stats.npcHeal[caster] = (stats.npcHeal[caster] || 0) + dmg;
                         }
                     }
                 }
@@ -1113,20 +1124,23 @@
                 };
 
                 for (const entry of this.data) {
-                    if (entry.caster === playerName) {
+                    const caster = this.getSummoner(entry.caster);
+                    const target = this.getSummoner(entry.target);
+                    
+                    if (caster === playerName) {
                         const dmg = parseInt(entry.damage) || 0;
                         if (dmg < 0) {
                             detail.damage -= dmg;
                             detail.elements[entry.element] = (detail.elements[entry.element] || 0) - dmg;
                             detail.skills[entry.desc] = (detail.skills[entry.desc] || 0) - dmg;
-                            if (entry.target !== playerName) {
-                                detail.targets[entry.target] = (detail.targets[entry.target] || 0) - dmg;
+                            if (target !== playerName) {
+                                detail.targets[target] = (detail.targets[target] || 0) - dmg;
                             }
                         } else {
                             detail.heal += dmg;
                         }
                     }
-                    if (entry.target === playerName) {
+                    if (target === playerName) {
                         const dmg = parseInt(entry.damage) || 0;
                         if (dmg < 0) {
                             detail.taken -= dmg;
@@ -1579,7 +1593,7 @@
             });
         }
 
-        // 更新战斗列表（带渐变高亮）
+        // 更新战斗列表（从上到下依次加载）
         function updateCombatListWithHighlight() {
             const listContainer = document.getElementById('combatList');
             const combats = Object.entries(combatDataDict);
@@ -1591,40 +1605,50 @@
 
             combats.sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
 
-            listContainer.innerHTML = combats.map(([id, combat]) => {
+            // 清空容器
+            listContainer.innerHTML = '';
+
+            // 依次添加战斗项，实现从上到下的加载效果
+            combats.forEach(([id, combat], index) => {
                 const playerCount = combat.players.length;
                 const mobCount = combat.mobs.length;
-                return `
-                    <div class="combat-item highlight" data-combat-id="${id}">
-                        <div class="combat-id">战斗 #${id}</div>
-                        <div class="combat-info">
-                            玩家: ${playerCount} | NPC: ${mobCount}
-                        </div>
+                const isActive = id === currentCombatId;
+                const classes = isActive ? 'combat-item active' : 'combat-item';
+                
+                const combatItem = document.createElement('div');
+                combatItem.className = classes;
+                combatItem.dataset.combatId = id;
+                combatItem.innerHTML = `
+                    <div class="combat-id">战斗 #${id}</div>
+                    <div class="combat-info">
+                        玩家: ${playerCount} | NPC: ${mobCount}
                     </div>
                 `;
-            }).join('');
-
-            // 绑定点击事件
-            listContainer.querySelectorAll('.combat-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const combatId = item.dataset.combatId;
+                
+                // 设置初始状态
+                combatItem.style.opacity = '0';
+                combatItem.style.transform = 'translateY(20px)';
+                combatItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                
+                // 添加到容器
+                listContainer.appendChild(combatItem);
+                
+                // 延迟显示，实现依次加载效果
+                setTimeout(() => {
+                    combatItem.style.opacity = '1';
+                    combatItem.style.transform = 'translateY(0)';
+                }, index * 100);
+                
+                // 绑定点击事件
+                combatItem.addEventListener('click', () => {
+                    const combatId = combatItem.dataset.combatId;
                     selectCombat(combatId);
 
                     // 更新选中状态
                     listContainer.querySelectorAll('.combat-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
+                    combatItem.classList.add('active');
                 });
             });
-
-            // 3秒后移除高亮效果
-            setTimeout(() => {
-                listContainer.querySelectorAll('.combat-item.highlight').forEach(item => {
-                    item.classList.add('fade-out');
-                    setTimeout(() => {
-                        item.classList.remove('highlight', 'fade-out');
-                    }, 300);
-                });
-            }, 2700);
         }
 
         // 选择战斗
