@@ -2378,13 +2378,25 @@
                 });
                 document.getElementById(tabId).classList.add('active');
 
-                // 切换到包含ECharts图表的标签页时，调整图表大小
+                // 切换到包含ECharts图表的标签页时，调整图表大小并触发动画
                 setTimeout(() => {
-                    if (tabId === 'overview' && charts['playerDamageChart']) {
-                        charts['playerDamageChart'].resize();
+                    if (tabId === 'overview' && currentCombatId) {
+                        const combat = combatDataDict[currentCombatId];
+                        if (combat) {
+                            if (charts['playerDamageChart']) {
+                                charts['playerDamageChart'].dispose();
+                            }
+                            updateOverview(combat);
+                        }
                     }
-                    if (tabId === 'healing' && charts['playerHealingChart']) {
-                        charts['playerHealingChart'].resize();
+                    if (tabId === 'healing' && currentCombatId) {
+                        const combat = combatDataDict[currentCombatId];
+                        if (combat) {
+                            if (charts['playerHealingChart']) {
+                                charts['playerHealingChart'].dispose();
+                            }
+                            updateHealing(combat);
+                        }
                     }
                 }, 100);
             });
