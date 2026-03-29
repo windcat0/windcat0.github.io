@@ -796,7 +796,7 @@
 
             <div class="content-area">
                 <div class="tabs">
-                    <button class="tab active" data-tab="overview">总览</button>
+                    <button class="tab active" data-tab="overview">伤害总览</button>
                     <button class="tab" data-tab="healing">治疗总览</button>
                     <button class="tab" data-tab="players">玩家统计</button>
                     <button class="tab" data-tab="npcs">NPC统计</button>
@@ -2155,7 +2155,7 @@
                     <div class="player-card" data-npc="${mob}" data-index="${index}">
                         <div class="name">${mob}</div>
                         <div class="breed">NPC</div>
-                        <div class="damage">${formatNumber(damage)} 伤害</div>
+                        <div class="damage">伤害：${formatNumber(damage)}</div>
                     </div>
                 `;
             }).join('');
