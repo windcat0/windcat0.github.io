@@ -513,7 +513,7 @@
 
         .player-card .damage {
             margin-top: 20px;
-            font-size: 1.8em;
+            font-size: 1.4em;
             font-weight: 700;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -2125,8 +2125,8 @@
                             <span>${player}</span>
                         </div>
                         <div class="breed">${breedName}</div>
-                        <div class="damage">${formatNumber(damage)} 伤害</div>
-                        <div class="damage" style="color: #66BB6A;">${formatNumber(heal)} 治疗</div>
+                        <div class="damage">伤害：${formatNumber(damage)}</div>
+                        <div class="damage" style="color: #66BB6A;">治疗：${formatNumber(heal)}</div>
                     </div>
                 `;
             }).join('');
