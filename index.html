@@ -1854,15 +1854,17 @@
                 xAxis: {
                     type: 'value',
                     splitLine: {
-                        lineStyle: { color: 'rgba(0, 0, 0, 0.05)' }
+                        lineStyle: { color: 'rgba(0, 0, 0, 0.12)' }
                     },
-                    axisLine: { show: false }
+                    axisLine: { show: true, lineStyle: { color: '#94a3b8', width: 1 } },
+                    axisTick: { show: true, lineStyle: { color: '#94a3b8' } },
+                    axisLabel: { color: '#475569', fontSize: 12 }
                 },
                 yAxis: {
                     type: 'category',
                     data: yAxisData,
                     inverse: true,
-                    axisLine: { show: false },
+                    axisLine: { show: true, lineStyle: { color: '#94a3b8', width: 1 } },
                     axisTick: { show: false },
                     axisLabel: {
                             color: '#333',
@@ -2021,15 +2023,17 @@
                 xAxis: {
                     type: 'value',
                     splitLine: {
-                        lineStyle: { color: 'rgba(0, 0, 0, 0.05)' }
+                        lineStyle: { color: 'rgba(0, 0, 0, 0.12)' }
                     },
-                    axisLine: { show: false }
+                    axisLine: { show: true, lineStyle: { color: '#94a3b8', width: 1 } },
+                    axisTick: { show: true, lineStyle: { color: '#94a3b8' } },
+                    axisLabel: { color: '#475569', fontSize: 12 }
                 },
                 yAxis: {
                     type: 'category',
                     data: yAxisData,
                     inverse: true,
-                    axisLine: { show: false },
+                    axisLine: { show: true, lineStyle: { color: '#94a3b8', width: 1 } },
                     axisTick: { show: false },
                     axisLabel: {
                             color: '#333',
@@ -2207,14 +2211,18 @@
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        }
+                            color: 'rgba(0, 0, 0, 0.12)',
+                            drawBorder: true
+                        },
+                        border: { color: '#94a3b8' },
+                        ticks: { color: '#475569', font: { size: 12 } }
                     },
                     y: {
                         grid: {
                             display: false
-                        }
+                        },
+                        border: { color: '#94a3b8' },
+                        ticks: { color: '#475569', font: { size: 12 } }
                     }
                 },
                 animation: {
@@ -2250,15 +2258,19 @@
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        }
+                            color: 'rgba(0, 0, 0, 0.12)',
+                            drawBorder: true
+                        },
+                        border: { color: '#94a3b8' },
+                        ticks: { color: '#475569', font: { size: 12 } }
                     },
                     y: {
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        }
+                            color: 'rgba(0, 0, 0, 0.12)',
+                            drawBorder: true
+                        },
+                        border: { color: '#94a3b8' },
+                        ticks: { color: '#475569', font: { size: 12 } }
                     }
                 },
                 animation: {
