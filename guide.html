@@ -126,6 +126,39 @@
             font-weight: 300;
         }
 
+        .home-btn {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            z-index: 1;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) translateX(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .home-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
         .main-content {
             padding: 40px;
         }
@@ -243,22 +276,7 @@
             font-weight: 500;
         }
 
-        .back-link {
-            display: inline-block;
-            margin: 40px 0 20px 0;
-            padding: 12px 24px;
-            background: var(--primary-gradient);
-            color: white;
-            text-decoration: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            transition: var(--transition);
-        }
 
-        .back-link:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
 
         @media (max-width: 768px) {
             .main-content {
@@ -276,6 +294,12 @@
             .guide-section h3 {
                 font-size: 1.4em;
             }
+
+            .home-btn {
+                right: 15px;
+                padding: 8px 14px;
+                font-size: 0.85em;
+            }
         }
     </style>
 </head>
@@ -285,6 +309,10 @@
             <img src="logo.webp" alt="Logo" class="logo">
             <h1>副本攻略</h1>
             <div class="version">Wakfu Guide</div>
+            <a href="index.html" class="home-btn">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                首页
+            </a>
         </div>
 
         <div class="main-content">
@@ -888,7 +916,6 @@
                     </div>
                 </div>
 
-                <a href="index.html" class="back-link">返回首页</a>
             </div>
         </div>
     </div>
