@@ -2336,8 +2336,7 @@
                         name: '伤害',
                         type: 'bar',
                         data: damageData,
-                        barWidth: '30%',
-                        barGap: '10%',
+                        barWidth: '40%',
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -2350,8 +2349,9 @@
                     {
                         name: '治疗',
                         type: 'bar',
+                        stack: 'total',
                         data: healData,
-                        barWidth: '30%',
+                        barWidth: '40%',
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -2364,8 +2364,9 @@
                     {
                         name: '吸血',
                         type: 'bar',
+                        stack: 'total',
                         data: lifeStealData,
-                        barWidth: '30%',
+                        barWidth: '40%',
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
