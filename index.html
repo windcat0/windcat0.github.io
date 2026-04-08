@@ -817,7 +817,7 @@
                 <div class="tabs">
                     <button class="tab active" data-tab="overview">伤害总览</button>
                     <button class="tab" data-tab="healing">治疗总览</button>
-                    <button class="tab" data-tab="summary">综合总览</button>
+                    <button class="tab" data-tab="summary">总览</button>
                     <button class="tab" data-tab="players">玩家统计</button>
                     <button class="tab" data-tab="npcs">NPC统计</button>
                     <button class="tab" data-tab="details">详细数据</button>
@@ -2191,7 +2191,7 @@
             echart.setOption(option);
         }
 
-        // 更新综合总览
+        // 更新总览
         async function updateSummary(combat) {
             const stats = combat.getStats();
 
@@ -2344,20 +2344,7 @@
                         data: damageData,
                         barWidth: '35%',
                         barCategoryGap: '80%',
-                        label: {
-                            show: true,
-                            position: 'right',
-                            formatter: function(params) {
-                                if (totalDamage > 0) {
-                                    const percentage = (params.value / totalDamage * 100).toFixed(1);
-                                    return percentage + '%';
-                                }
-                                return '0%';
-                            },
-                            color: '#333',
-                            fontSize: 12,
-                            fontWeight: 'bold'
-                        },
+
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -2373,22 +2360,9 @@
                         stack: 'total',
                         data: healData,
                         barWidth: '35%',
-                        label: {
-                            show: true,
-                            position: 'right',
-                            formatter: function(params) {
-                                if (totalHealAndLifeSteal > 0) {
-                                    const percentage = (params.value / totalHealAndLifeSteal * 100).toFixed(1);
-                                    return percentage + '%';
-                                }
-                                return '0%';
-                            },
-                            color: '#333',
-                            fontSize: 12,
-                            fontWeight: 'bold'
-                        },
+                        barGap: '0%',
                         itemStyle: {
-                            borderRadius: [4, 4, 4, 4],
+                            borderRadius: [4, 4, 0, 0],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                                 { offset: 0, color: '#66BB6A' },
                                 { offset: 0.5, color: '#81C784' },
@@ -2402,22 +2376,8 @@
                         stack: 'total',
                         data: lifeStealData,
                         barWidth: '35%',
-                        label: {
-                            show: true,
-                            position: 'right',
-                            formatter: function(params) {
-                                if (totalHealAndLifeSteal > 0) {
-                                    const percentage = (params.value / totalHealAndLifeSteal * 100).toFixed(1);
-                                    return percentage + '%';
-                                }
-                                return '0%';
-                            },
-                            color: '#333',
-                            fontSize: 12,
-                            fontWeight: 'bold'
-                        },
                         itemStyle: {
-                            borderRadius: [4, 4, 4, 4],
+                            borderRadius: [0, 0, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                                 { offset: 0, color: '#9C27B0' },
                                 { offset: 0.5, color: '#AB47BC' },
