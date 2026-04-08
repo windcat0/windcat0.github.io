@@ -2231,6 +2231,12 @@
             const damageData = playerDataArray.map(item => item[1].damage);
             const healData = playerDataArray.map(item => item[1].heal);
             const lifeStealData = playerDataArray.map(item => item[1].lifeSteal);
+            
+            // 计算总伤害
+            const totalDamage = damageData.reduce((sum, value) => sum + value, 0);
+            
+            // 计算总治疗和吸血
+            const totalHealAndLifeSteal = healData.reduce((sum, value) => sum + value, 0) + lifeStealData.reduce((sum, value) => sum + value, 0);
 
             // 预加载所有图标
             const breedIds = [...new Set(playerNames.map(name => combat.playersBreed[name] || '0'))];
@@ -2338,6 +2344,20 @@
                         data: damageData,
                         barWidth: '35%',
                         barCategoryGap: '80%',
+                        label: {
+                            show: true,
+                            position: 'right',
+                            formatter: function(params) {
+                                if (totalDamage > 0) {
+                                    const percentage = (params.value / totalDamage * 100).toFixed(1);
+                                    return percentage + '%';
+                                }
+                                return '0%';
+                            },
+                            color: '#333',
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                        },
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -2353,6 +2373,20 @@
                         stack: 'total',
                         data: healData,
                         barWidth: '35%',
+                        label: {
+                            show: true,
+                            position: 'right',
+                            formatter: function(params) {
+                                if (totalHealAndLifeSteal > 0) {
+                                    const percentage = (params.value / totalHealAndLifeSteal * 100).toFixed(1);
+                                    return percentage + '%';
+                                }
+                                return '0%';
+                            },
+                            color: '#333',
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                        },
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -2368,6 +2402,20 @@
                         stack: 'total',
                         data: lifeStealData,
                         barWidth: '35%',
+                        label: {
+                            show: true,
+                            position: 'right',
+                            formatter: function(params) {
+                                if (totalHealAndLifeSteal > 0) {
+                                    const percentage = (params.value / totalHealAndLifeSteal * 100).toFixed(1);
+                                    return percentage + '%';
+                                }
+                                return '0%';
+                            },
+                            color: '#333',
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                        },
                         itemStyle: {
                             borderRadius: [4, 4, 4, 4],
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
