@@ -936,6 +936,16 @@
                                     <div class="value" id="detailEarth">0</div>
                                 </div>
                             </div>
+                            <div class="heal-stats" style="display: flex; gap: 20px; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div class="heal-stat" style="flex: 1; text-align: center;">
+                                    <div class="label" style="font-size: 12px; color: #666; margin-bottom: 5px;">治疗量</div>
+                                    <div class="value" id="detailHeal" style="font-size: 20px; font-weight: 600; color: #66BB6A;">0</div>
+                                </div>
+                                <div class="life-steal-stat" style="flex: 1; text-align: center;">
+                                    <div class="label" style="font-size: 12px; color: #666; margin-bottom: 5px;">吸血量</div>
+                                    <div class="value" id="detailLifeSteal" style="font-size: 20px; font-weight: 600; color: #9C27B0;">0</div>
+                                </div>
+                            </div>
 
                             <div class="chart-container">
                                 <h4>技能伤害分布</h4>
@@ -1140,6 +1150,7 @@
                     playerDamage: {},
                     playerTaken: {},
                     playerHeal: {},
+                    playerLifeSteal: {},
                     npcDamage: {},
                     npcTaken: {},
                     npcHeal: {},
@@ -1172,7 +1183,14 @@
                     // 治疗/护盾统计
                     if (dmg > 0) {
                         if (isPlayerCaster) {
-                            stats.playerHeal[caster] = (stats.playerHeal[caster] || 0) + dmg;
+                            // 获取施法者的职业
+                            const casterBreed = this.playersBreed[caster];
+                            // 治疗(Eniripsa)对自己造成的治疗算作治疗，其他职业对自身造成的治疗统计为吸血
+                            if (caster === target && casterBreed !== '7') {
+                                stats.playerLifeSteal[caster] = (stats.playerLifeSteal[caster] || 0) + dmg;
+                            } else {
+                                stats.playerHeal[caster] = (stats.playerHeal[caster] || 0) + dmg;
+                            }
                         } else {
                             stats.npcHeal[caster] = (stats.npcHeal[caster] || 0) + dmg;
                         }
@@ -1187,10 +1205,14 @@
                     damage: 0,
                     taken: 0,
                     heal: 0,
+                    lifeSteal: 0,
                     elements: { Fire: 0, Water: 0, Air: 0, Earth: 0, Neutral: 0 },
                     skills: {},
                     targets: {}
                 };
+
+                // 获取玩家职业
+                const playerBreed = this.playersBreed[playerName];
 
                 for (const entry of this.data) {
                     const caster = this.getSummoner(entry.caster);
@@ -1206,7 +1228,12 @@
                                 detail.targets[target] = (detail.targets[target] || 0) - dmg;
                             }
                         } else {
-                            detail.heal += dmg;
+                            // 治疗(Eniripsa)对自己造成的治疗算作治疗，其他职业对自身造成的治疗统计为吸血
+                            if (caster === target && playerBreed !== '7') {
+                                detail.lifeSteal += dmg;
+                            } else {
+                                detail.heal += dmg;
+                            }
                         }
                     }
                     if (target === playerName) {
@@ -2135,6 +2162,7 @@
                 const breedName = breedNames[breed] || '未知';
                 const damage = stats.playerDamage[player] || 0;
                 const heal = stats.playerHeal[player] || 0;
+                const lifeSteal = stats.playerLifeSteal[player] || 0;
                 const iconPath = getBreedIconPath(breed);
 
                 return `
@@ -2150,6 +2178,7 @@
                         <div class="breed">${breedName}</div>
                         <div class="damage">伤害：${formatNumber(damage)}</div>
                         <div class="damage" style="color: #66BB6A;">治疗：${formatNumber(heal)}</div>
+                        ${lifeSteal > 0 ? `<div class="damage" style="color: #9C27B0;">吸血：${formatNumber(lifeSteal)}</div>` : ''}
                     </div>
                 `;
             }).join('');
@@ -2194,6 +2223,8 @@
             document.getElementById('detailWater').textContent = formatNumber(detail.elements.Water);
             document.getElementById('detailAir').textContent = formatNumber(detail.elements.Air);
             document.getElementById('detailEarth').textContent = formatNumber(detail.elements.Earth);
+            document.getElementById('detailHeal').textContent = formatNumber(detail.heal);
+            document.getElementById('detailLifeSteal').textContent = formatNumber(detail.lifeSteal);
 
             document.getElementById('playerDetailSection').classList.add('active');
 
